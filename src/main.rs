@@ -1,17 +1,26 @@
 #![allow(unused)] // For beginning only.
 
+// re-export (best practice)
+pub use self::error::{Error, Result};
+
 use std::net::SocketAddr;
-use axum::response::{Html, IntoResponse};
-use axum::{Router, Server};
+use axum::response::{Html, IntoResponse, Response};
+use axum::{middleware, Router, Server};
 use axum::extract::{Path, Query};
 use axum::handler::HandlerWithoutStateExt;
 use axum::routing::{get, get_service};
 use serde::Deserialize;
 use tower_http::services::ServeDir;
 
+mod error;
+mod web;
+
 #[tokio::main]
 async fn main() {
-    let routes_all = Router::new().merge(routes_hello())
+    let routes_all = Router::new()
+        .merge(routes_hello())
+        .merge(web::routes_login::routes())
+        .layer(middleware::map_response(main_response_mapper))
         .fallback_service(routes_static());
     // routes_static() can't be merged with routes_hello(), because path "/" would collide.
     // But static routes usually can be used as a fallback
@@ -22,6 +31,13 @@ async fn main() {
     Server::bind(&addr).serve(routes_all.into_make_service())
         .await
         .unwrap();
+}
+
+async fn main_response_mapper(res: Response) -> Response {
+    //adding just an empty line in the logs for now to separate the different requests
+    println!("->> {:<12} - main_response_mapper", "RES_MAPPER");
+    println!();
+    res
 }
 
 fn routes_static() -> Router {
