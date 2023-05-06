@@ -10,21 +10,21 @@ repository = "https://github.com/rust-httpc-test"
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
-# Serde / json
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-serde_with = "2"
-# Axum
-axum = "0.6"
-tower-http = { version = "0.4", features = ["fs"] }
-tower-cookies = "0.9"
-# Others
-lazy-regex = "2"
-async-trait = "0.1"
-strum_macros = "0.24"
-uuid = {version = "1", features = ["v4","fast-rng",]}
+## Serde / json
+#serde = { version = "1", features = ["derive"] }
+#serde_json = "1"
+#serde_with = "2"
+## Axum
+#axum = "0.6"
+#tower-http = { version = "0.4", features = ["fs"] }
+#tower-cookies = "0.9"
+## Others
+#lazy-regex = "2"
+#async-trait = "0.1"
+#strum_macros = "0.24"
+#uuid = {version = "1", features = ["v4","fast-rng",]}
 
 
 [dev-dependencies]
 anyhow = "1"
-httpc-test = "0.1.1"
+#httpc-test = "0.1.1"
