@@ -8,6 +8,7 @@ async fn quick_dev() -> Result<()> {
 
     hc.do_get("/hello").await?.print().await?;
     hc.do_get("/hello?name=Rust").await?.print().await?;
+    hc.do_get("/hello2/Pathfinder").await?.print().await?;
     Ok(())
 }
 
