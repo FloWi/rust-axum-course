@@ -10,6 +10,7 @@ use axum::extract::{Path, Query};
 use axum::handler::HandlerWithoutStateExt;
 use axum::routing::{get, get_service};
 use serde::Deserialize;
+use tower_cookies::CookieManagerLayer;
 use tower_http::services::ServeDir;
 
 mod error;
@@ -21,6 +22,7 @@ async fn main() {
         .merge(routes_hello())
         .merge(web::routes_login::routes())
         .layer(middleware::map_response(main_response_mapper))
+        .layer(CookieManagerLayer::new())
         .fallback_service(routes_static());
     // routes_static() can't be merged with routes_hello(), because path "/" would collide.
     // But static routes usually can be used as a fallback
