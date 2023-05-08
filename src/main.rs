@@ -8,11 +8,13 @@ use axum::extract::{Path, Query};
 use axum::handler::HandlerWithoutStateExt;
 use axum::response::{Html, IntoResponse, Response};
 use axum::routing::{get, get_service};
-use axum::{middleware, Router, Server};
+use axum::{middleware, Json, Router, Server};
 use serde::Deserialize;
+use serde_json::json;
 use std::net::SocketAddr;
 use tower_cookies::CookieManagerLayer;
 use tower_http::services::ServeDir;
+use uuid::Uuid;
 
 mod ctx;
 mod error;
@@ -54,8 +56,35 @@ async fn main() -> Result<()> {
 async fn main_response_mapper(res: Response) -> Response {
 	//adding just an empty line in the logs for now to separate the different requests
 	println!("->> {:<12} - main_response_mapper", "RES_MAPPER");
+	let uuid = Uuid::new_v4();
+
+	// Get the potential response error
+	let service_error = res.extensions().get::<Error>();
+	let client_status_error = service_error.map(|se| se.client_status_and_error());
+
+	// If client error, build the new response
+	let error_response =
+		client_status_error
+			.as_ref()
+			.map(|(status_code, client_error)| {
+				let client_error_body = json!({
+					"error": {
+						"type": client_error.as_ref(), //comes from strum
+						"req_uuid": uuid.to_string(),
+					}
+				});
+
+				println!("   ->> client_error_body {client_error_body}");
+
+				//Build the new response from the client_error_body
+				(*status_code, Json(client_error_body)).into_response() //* <-- dereference works, because statuscode is of type Copy
+			});
+
+	// TODO: Build and log the server log line
+	println!("   ->> server log line - {uuid} - Error: {service_error:?}");
+
 	println!();
-	res
+	error_response.unwrap_or(res)
 }
 
 fn routes_static() -> Router {
