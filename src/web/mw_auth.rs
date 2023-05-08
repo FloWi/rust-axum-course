@@ -12,20 +12,14 @@ use lazy_regex::regex_captures;
 use tower_cookies::Cookies;
 
 pub async fn mw_require_auth<B>(
-	cookies: Cookies,
+	ctx: Result<Ctx>,
 	req: Request<B>,
 	next: Next<B>,
 ) -> Result<Response> {
-	println!("->> {:<12} - mw_require_auth", "MIDDLEWARE");
+	//ctx can also be w/o Result, or can be Option
+	println!("->> {:<12} - mw_require_auth - {ctx:?}", "MIDDLEWARE");
 
-	let auth_token = cookies.get(AUTH_TOKEN).map(|c| c.value().to_string());
-
-	let (user_id, exp, sign) = auth_token
-		.ok_or(Error::AuthFailNoAuthTokenCookie)
-		.and_then(parse_token)?;
-
-	// TODO: Token components validation (e.g. signature check etc. not part of this tutorial)
-
+	ctx?;
 	Ok(next.run(req).await)
 }
 
@@ -43,7 +37,6 @@ impl<S: Send + Sync> FromRequestParts<S> for Ctx {
 		// Use the cookies extractor
 		let cookies = parts.extract::<Cookies>().await.unwrap();
 
-		// Same code as above
 		let auth_token = cookies.get(AUTH_TOKEN).map(|c| c.value().to_string());
 
 		let (user_id, exp, sign) = auth_token
