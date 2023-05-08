@@ -29,7 +29,6 @@ async fn api_login(
 			"success": true
 		}
 	}));
-
 	Ok(body)
 }
 
