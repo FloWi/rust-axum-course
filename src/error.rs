@@ -1,16 +1,18 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
+use serde::Serialize;
 
 // convenience for later
 pub type Result<T> = core::result::Result<T, Error>;
 
 //Key Idea here: NEVER send internal details about the error to the client
 
-#[derive(Debug, Clone, strum_macros::AsRefStr)]
+#[derive(Debug, Clone, Serialize, strum_macros::AsRefStr)]
+#[serde(tag = "type", content = "data")]
 pub enum Error {
 	LoginFail,
 	AuthFailNoAuthTokenCookie,
-	AuthFailCtxNotInRequestExtion,
+	AuthFailCtxNotInRequestExtension,
 	AuthFailTokenWrongFormat,
 	TicketDeleteFailedIdNotFound { id: u64 },
 }
@@ -35,7 +37,7 @@ impl Error {
 			Error::LoginFail => (StatusCode::FORBIDDEN, ClientError::LOGIN_FAIL),
 			// Auth
 			Error::AuthFailNoAuthTokenCookie
-			| Error::AuthFailCtxNotInRequestExtion
+			| Error::AuthFailCtxNotInRequestExtension
 			| Error::AuthFailTokenWrongFormat => {
 				(StatusCode::FORBIDDEN, ClientError::NO_AUTH)
 			}

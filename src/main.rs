@@ -3,9 +3,12 @@
 // re-export (best practice)
 pub use self::error::{Error, Result};
 
+use crate::ctx::Ctx;
+use crate::log::log_request;
 use crate::model::ModelController;
 use axum::extract::{Path, Query};
 use axum::handler::HandlerWithoutStateExt;
+use axum::http::{Method, Uri};
 use axum::response::{Html, IntoResponse, Response};
 use axum::routing::{get, get_service};
 use axum::{middleware, Json, Router, Server};
@@ -18,6 +21,7 @@ use uuid::Uuid;
 
 mod ctx;
 mod error;
+mod log;
 mod model;
 mod web;
 
@@ -53,7 +57,12 @@ async fn main() -> Result<()> {
 	Ok(())
 }
 
-async fn main_response_mapper(res: Response) -> Response {
+async fn main_response_mapper(
+	ctx: Option<Ctx>,
+	uri: Uri,
+	req_method: Method,
+	res: Response,
+) -> Response {
 	//adding just an empty line in the logs for now to separate the different requests
 	println!("->> {:<12} - main_response_mapper", "RES_MAPPER");
 	let uuid = Uuid::new_v4();
@@ -80,8 +89,10 @@ async fn main_response_mapper(res: Response) -> Response {
 				(*status_code, Json(client_error_body)).into_response() //* <-- dereference works, because statuscode is of type Copy
 			});
 
-	// TODO: Build and log the server log line
-	println!("   ->> server log line - {uuid} - Error: {service_error:?}");
+	// --> Same as this in scala:
+	// foo: Option[(String, Int)]; foo.map(_._2)
+	let client_error = client_status_error.unzip().1;
+	log_request(uuid, req_method, uri, ctx, service_error, client_error).await;
 
 	println!();
 	error_response.unwrap_or(res)
